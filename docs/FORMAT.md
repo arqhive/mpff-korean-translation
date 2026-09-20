@@ -192,6 +192,19 @@ Pretendard SemiBold 24pt, 칸 폭 `b = 22`, advance `a = 22`.
 1,023px 짜리 줄을 싣는다**(`"First, we'll position a special drill specifically"`).
 상자는 넉넉하다. 한글 최대는 449px 이다.
 
+## locale.txt 가 없으면 타 리전 본체에서 크래시한다
+
+`sd:/luma/titles/000400000016CE00/locale.txt` 에 `JPN JP` 를 넣어야 한다.
+없으면 **게임 시작 직후 크래시한다** — 한국판 3DS 로 실기 확인했다.
+
+원인: 게임이 시스템 언어에 맞는 언어 팩을 찾는데, 이 pak 의 확장자는
+`.efigs` / `.debug` / `.jp` / `.data` 뿐이라 한국어에 맞는 것이 없다. 파일 열기가
+실패하고, 그 핸들(0)을 검사 없이 써서 NULL 역참조로 죽는다. 섹션3 압축 크기
+초과와 **크래시 모양이 똑같아서**(같은 청크 로더, 같은 NULL 핸들) 헷갈리기 쉽다.
+
+`locale.txt` 는 Luma 의 LayeredFS 기능이라 **CIA 에 담을 수 없다.** CIA 로
+배포해도 사용자가 SD 에 따로 둬야 하므로 배포물과 설명서에 반드시 포함한다.
+
 ## 배너와 아이콘 (ExeFS)
 
 게임 밖 HOME 메뉴에 나오는 것들이다. romfs 가 아니라 ExeFS 에 있다.
