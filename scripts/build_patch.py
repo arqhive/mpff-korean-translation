@@ -49,6 +49,16 @@ PEN_X, BASELINE_Y = 1, 24  # 모든 음절을 같은 원점에 그려야 기준�
 SEC1_TYPES = (0x33027011, 0x33027012, 0x32001301, 0x3201B501)
 SEC3_LIMIT = 989952
 
+# 섹션3 의 **압축된** 크기 한계. 원본이 272,729바이트인데 이걸 넘기면 실기에서
+# 게임 시작 직후 크래시한다(에뮬레이터는 통과한다 — 실기로만 잡힌다).
+# 청크 로더가 이 크기로 버퍼를 잡는 듯하고, 실패하면 파일 핸들이 0 이 된 채
+# 그대로 쓰여서 NULL 역참조로 죽는다.
+SEC3_COMP_LIMIT = 272729
+
+# 4bpp 니블을 8단계로 줄인다. 한글 아틀라스는 계조가 많아 압축이 나쁜데,
+# 8단계로 줄이면 20,000바이트 이상 줄고 육안으로는 구분되지 않는다.
+NIBBLE_MASK = 0xE
+
 # 한글화 후에는 더 이상 쓰지 않는 문자. 자리를 비워 한글 음절을 더 넣는다.
 def is_droppable(ch):
     o = ord(ch)
@@ -64,6 +74,23 @@ def hangul_cell(font, ch, width):
     ImageDraw.Draw(tmp).text((PEN_X + pad, BASELINE_Y + pad), ch,
                              font=font, fill=255, anchor="ls")
     return np.array(tmp)[pad:pad + FL.ROW_H, pad:pad + width]
+
+
+def tidy_page(img, cells):
+    """압축이 잘 되게 다듬는다. 글리프 배치가 바뀐 페이지에만 쓴다.
+
+    * 글리프가 놓이지 않은 자리에 남아 있는 원본 픽셀을 지운다.
+    * 니블 계조를 NIBBLE_MASK 로 줄인다. 가장 진한 단계는 15 로 유지한다.
+    """
+    keep = np.zeros(img.shape, bool)
+    for x, y, w in cells:
+        keep[y:y + FL.ROW_H, x:x + w] = True
+    out = img.copy()
+    if NIBBLE_MASK != 0xF:
+        nb = out // 17
+        out = (np.where(nb >= NIBBLE_MASK, 15, nb & NIBBLE_MASK) * 17).astype(np.uint8)
+    out[~keep] = 0
+    return out
 
 
 def replace_sec1_spans(sec1, recs, replace):
@@ -194,6 +221,14 @@ def main():
         touched.add(pi)
     print(f"다시 그리는 페이지 {len(touched)}장: {sorted(touched)}")
 
+    # 다시 그리는 페이지는 압축이 잘 되게 다듬는다. 섹션3 의 압축 크기가
+    # SEC3_COMP_LIMIT 를 넘기면 실기에서 크래시하기 때문이다.
+    cells_on = collections.defaultdict(list)
+    for (_k, *_r), (pi, x, y, w) in zip(merged, place):
+        cells_on[pi].append((x, y, w))
+    for pi in touched:
+        pages[pi] = tidy_page(pages[pi], cells_on[pi])
+
     # --- 정의 ---------------------------------------------------------------
     desc_bytes = F.render_desc(font.desc, merged)
     desc_idx = [i for i, (t, s, o) in enumerate(recs)
@@ -222,6 +257,16 @@ def main():
     # --- 마무리 -------------------------------------------------------------
     secs[0] = N.build_index(recs)
     pak = N.pack_container(secs)
+
+    # 섹션3 의 압축 크기 검사. 넘기면 실기에서만 크래시하므로 여기서 막는다.
+    comp3 = N.container_chunk_table(pak)[3][2]
+    room = SEC3_COMP_LIMIT - comp3
+    print(f"섹션3 압축 {comp3:,} / 한계 {SEC3_COMP_LIMIT:,}  여유 {room:+,}")
+    if comp3 > SEC3_COMP_LIMIT:
+        raise SystemExit(
+            f"섹션3 압축 크기가 {comp3 - SEC3_COMP_LIMIT:,}바이트 초과다. "
+            f"실기에서 게임 시작 직후 크래시한다. NIBBLE_MASK 를 더 낮추거나 "
+            f"한글 음절 수를 줄여라.")
     os.makedirs(OUT, exist_ok=True)
     open(os.path.join(OUT, "init.jp"), "wb").write(pak)
     open(os.path.join(OUT, "init.dict"), "wb").write(
