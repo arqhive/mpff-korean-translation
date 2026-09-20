@@ -36,6 +36,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TITLE_ID = "000400000016ce00"
 
 
+def np(p):
+    """경로 구분자를 하나로 맞춘다.
+
+    ctrtool 은 '/' 와 '\\' 가 섞인 경로를 거부한다
+    ("Path literal has both forward and backward path separators").
+    """
+    return os.path.normpath(p)
+
+
 def run(cmd, log):
     with open(log, "wb") as f:
         r = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT)
@@ -91,7 +100,7 @@ def main():
         p = os.path.join(a.tools, name) if a.tools else name
         if a.tools and not os.path.exists(p) and os.path.exists(p + ".exe"):
             p += ".exe"
-        return p
+        return np(p)
 
     W = a.work
     os.makedirs(W, exist_ok=True)
@@ -106,7 +115,7 @@ def main():
     print("콘텐츠 분리 (ctrtool)")
     cdir = os.path.join(W, "contents")
     os.makedirs(cdir, exist_ok=True)
-    run([tool("ctrtool"), f"--contents={os.path.join(cdir, 'c')}", a.cia], L("ctrtool"))
+    run([tool("ctrtool"), f"--contents={np(os.path.join(cdir, 'c'))}", np(a.cia)], L("ctrtool"))
     files = {}
     for fn in os.listdir(cdir):
         parts = fn.split(".")
@@ -119,46 +128,51 @@ def main():
     print("CXI 펼치기 (3dstool)")
     cx = os.path.join(W, "cxi")
     os.makedirs(cx, exist_ok=True)
-    p = lambda n: os.path.join(cx, n)
-    run([tool("3dstool"), "-xvtf", "cxi", main_cxi,
+    p = lambda n: np(os.path.join(cx, n))
+    run([tool("3dstool"), "-xvtf", "cxi", np(main_cxi),
          "--header", p("ncchheader.bin"), "--exh", p("exheader.bin"),
          "--logo", p("logo.bin"), "--plain", p("plain.bin"),
-         "--exefs", p("exefs.bin"), "--romfs", os.path.join(W, "romfs.bin")], L("xcxi"))
+         "--exefs", p("exefs.bin"), "--romfs", np(os.path.join(W, "romfs.bin"))], L("xcxi"))
 
     print("RomFS 펼치기")
     rx = os.path.join(W, "rx")
-    run([tool("3dstool"), "-xvtf", "romfs", os.path.join(W, "romfs.bin"),
-         "--romfs-dir", rx], L("xromfs"))
+    run([tool("3dstool"), "-xvtf", "romfs", np(os.path.join(W, "romfs.bin")),
+         "--romfs-dir", np(rx)], L("xromfs"))
 
     # 3) 한글 파일 덮어쓰기
-    out_dir = os.path.join(ROOT, "out")
-    for n in ("init.jp", "init.dict"):
-        src = os.path.join(out_dir, n)
-        if not os.path.exists(src):
-            raise SystemExit(f"{src} 가 없다. 먼저 python scripts/build_patch.py 를 돌려라.")
-        shutil.copy(src, os.path.join(rx, n))
-    print(f"romfs 에 init.jp / init.dict 덮어씀")
+    # 업데이트 타이틀의 romfs 에는 init.jp 가 없다. 그때는 아이콘만 바꾸면 된다
+    # (본편의 init.jp 가 그대로 쓰이므로 게임 내 텍스트는 이미 한글이다).
+    if os.path.exists(os.path.join(rx, "init.jp")):
+        out_dir = os.path.join(ROOT, "out")
+        for n in ("init.jp", "init.dict"):
+            src = os.path.join(out_dir, n)
+            if not os.path.exists(src):
+                raise SystemExit(f"{src} 가 없다. 먼저 python scripts/build_patch.py 를 돌려라.")
+            shutil.copy(src, os.path.join(rx, n))
+        print("romfs 에 init.jp / init.dict 덮어씀")
+    else:
+        print("romfs 에 init.jp 가 없다 (업데이트 타이틀) — romfs 는 그대로 둔다")
 
     # 4) 배너·아이콘
     build_banner.patch_exefs_file(p("exefs.bin"))
 
     # 5) 다시 싸기
     print("RomFS 재빌드")
-    run([tool("3dstool"), "-cvtf", "romfs", os.path.join(W, "romfs.bin"),
-         "--romfs-dir", rx], L("cromfs"))
+    run([tool("3dstool"), "-cvtf", "romfs", np(os.path.join(W, "romfs.bin")),
+         "--romfs-dir", np(rx)], L("cromfs"))
     print("CXI 재빌드 (--not-encrypt)")
-    ko_cxi = os.path.join(W, "ko.cxi")
+    ko_cxi = np(os.path.join(W, "ko.cxi"))
     run([tool("3dstool"), "-cvtf", "cxi", ko_cxi,
          "--header", p("ncchheader.bin"), "--exh", p("exheader.bin"),
          "--logo", p("logo.bin"), "--plain", p("plain.bin"),
-         "--exefs", p("exefs.bin"), "--romfs", os.path.join(W, "romfs.bin"),
+         "--exefs", p("exefs.bin"), "--romfs", np(os.path.join(W, "romfs.bin")),
          "--not-encrypt"], L("ccxi"))
 
     # 6) CIA 로 묶기
     print("CIA 묶기 (makerom -ignoresign)")
-    cmd = [tool("makerom"), "-f", "cia", "-o", a.out, "-ignoresign"]
+    cmd = [tool("makerom"), "-f", "cia", "-o", np(a.out), "-ignoresign"]
     for idx, cid, _size in sorted(contents):
-        f = ko_cxi if idx == 0 else files[idx]
+        f = ko_cxi if idx == 0 else np(files[idx])
         cmd += ["-content", f"{f}:{idx}:{cid}"]
     run(cmd, L("makerom"))
 

@@ -38,8 +38,14 @@ for _i in range(64):
 
 
 def encode_rgba8(img, w, h):
-    """세로 뒤집힌 8x8 모턴 타일 RGBA8(바이트 순서 A,B,G,R)로 인코딩."""
-    a = np.array(img.convert("RGBA"), dtype=np.uint8)[::-1]
+    """8x8 모턴 타일 RGBA8(바이트 순서 A,B,G,R)로 인코딩. 입력은 똑바로 선 그림.
+
+    배너 CGFX 의 텍스처는 **세로로 뒤집혀 있지 않다**. 폰트 아틀라스(nlgfont)는
+    뒤집혀 있어서 그쪽 관례를 그대로 옮겼다가, 배너 글자가 실기에서 거꾸로 나왔다.
+    인코더가 디코더의 역함수이기만 하면 왕복 검사는 통과하므로 이 실수는 왕복으로
+    잡히지 않는다 — 원본을 뒤집지 않고 디코딩해 글자가 똑바로 서는지 눈으로 봐야 한다.
+    """
+    a = np.array(img.convert("RGBA"), dtype=np.uint8)
     assert a.shape[:2] == (h, w), f"{a.shape} != {(h, w)}"
     out = bytearray()
     for ty in range(h // 8):
@@ -133,18 +139,30 @@ def rebuild_exefs(path, patches):
 
 
 def patch_exefs_file(exefs_path):
-    """ExeFS 파일을 제자리에서 한글판으로 바꾼다. 원본 배너/아이콘은 그 안에서 읽는다."""
-    if not os.path.exists(STRIP):
-        print("배너 띠 이미지가 없어 먼저 만든다")
-        import make_banner_strip
-        make_banner_strip.main()
+    """ExeFS 파일을 제자리에서 한글판으로 바꾼다. 원본 배너/아이콘은 그 안에서 읽는다.
+
+    업데이트 타이틀의 ExeFS 에는 banner 가 없고 icon 만 있다. 그 경우 아이콘만 바꾼다.
+    업데이트가 설치돼 있으면 HOME 메뉴 제목은 업데이트의 SMDH 를 따라가므로
+    본편만 고치면 제목이 일본어로 남는다.
+    """
     src = read_exefs(open(exefs_path, "rb").read())
-    print("배너 패치")
-    banner = patch_banner(src["banner"])
+    patches = {}
+
+    if "banner" in src:
+        if not os.path.exists(STRIP):
+            print("배너 띠 이미지가 없어 먼저 만든다")
+            import make_banner_strip
+            make_banner_strip.main()
+        print("배너 패치")
+        patches["banner"] = patch_banner(src["banner"])
+    else:
+        print("배너 없음 (업데이트 타이틀) — 아이콘만 바꾼다")
+
     print("아이콘(SMDH) 패치")
-    icon = patch_smdh(src["icon"])
+    patches["icon"] = patch_smdh(src["icon"])
+
     print("ExeFS 재구성")
-    out = rebuild_exefs(exefs_path, {"banner": banner, "icon": icon})
+    out = rebuild_exefs(exefs_path, patches)
     open(exefs_path, "wb").write(out)
     print(f"완료: {exefs_path} {len(out):,} 바이트")
 
