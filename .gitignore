@@ -1,0 +1,27 @@
+# 게임 데이터는 저장소에 넣지 않는다 (직접 준비해야 한다)
+base_jp/
+upd_jp/
+ref_us/
+*.cia
+*.cxi
+*.3ds
+*.bin
+!fonts/*.bin
+seeddb.bin
+boot9.bin
+
+# 빌드 산출물·조사 기록·외부 도구
+out/
+dump/
+tools/
+work/
+
+# 검수 왕복 중간 파일
+tl/*.pre_review
+tl/pending_*.json
+
+__pycache__/
+*.pyc
+
+# 세션 중 쓰고 버린 조사용 스크립트 (로컬 보관)
+scripts/scratch/
