@@ -73,10 +73,18 @@ LayeredFS 는 HOME 메뉴의 제목·배너를 바꾸지 못한다. 거기까지
 
 ### 실행
 
+**본편 CIA 만** 다시 만들면 된다. 업데이트 타이틀은 그대로 설치해도
+본편의 한국어 제목·아이콘·배너가 유지된다(실기 확인).
+
 ```bash
 python scripts/build_patch.py                       # 먼저 out/ 을 만들어 둔다
 python scripts/build_cia.py --cia "일본판.cia" --out "한글판.cia"
 ```
+
+참고로 업데이트 타이틀은 makerom 으로 재현할 수도 없다. 콘텐츠 인덱스가 원래 0·2번
+(1번 없음)인데 **makerom 은 인덱스가 0 부터 연속이어야 한다** — 0,2 로 주면
+`[NCCH ERROR] Content not a valid ncch` 로 실패한다(암호화 문제가 아니다. 평문으로
+다시 싸도 같다).
 
 `--tools`, `--work`, `--keep` 을 쓸 수 있다. `--keep` 은 중간 파일을 남긴다.
 
