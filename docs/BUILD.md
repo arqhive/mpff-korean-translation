@@ -133,5 +133,5 @@ python scripts/build_cia.py --cia "일본판.cia" --out "한글판.cia"
 
 ## 3. 번역 고치기
 
-[README](../README.md#번역-고치기) 를 보라. `tl/review_io.py` 로 검수용 JSON 을
+[README](../README.md#번역-수정) 를 보라. `tl/review_io.py` 로 검수용 JSON 을
 주고받는다.
