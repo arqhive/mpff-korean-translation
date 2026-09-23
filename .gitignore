@@ -25,3 +25,10 @@ __pycache__/
 
 # 세션 중 쓰고 버린 조사용 스크립트 (로컬 보관)
 scripts/scratch/
+
+# 배포 패처에 꾸리는 것 (빌드 때 채운다 — make_patcher.py)
+release/patcher/lib/
+release/patcher/bin/
+release/patcher/payload/
+release/python/
+release/*.zip
