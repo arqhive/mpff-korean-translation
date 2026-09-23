@@ -84,7 +84,7 @@ LayeredFS 패치라 롬 전체가 아니라 바뀌는 두 파일을 비교합니
 
 ### 실행 환경
 
-- **확인함**: 3DS + Luma3DS(LayeredFS), 3DS(CIA 재빌드 설치), Azahar.
+- **확인함**: 3DS + Luma3DS(LayeredFS), 3DS(패처로 만든 CIA 설치), Azahar.
 
 ### 알려진 문제
 
@@ -103,8 +103,8 @@ LayeredFS 패치라 롬 전체가 아니라 바뀌는 두 파일을 비교합니
 
 ```bash
 python scripts/build_patch.py                      # tl/ko.json -> out/init.jp, out/init.dict
-python scripts/make_patcher.py 0.1 --python <임베디드 파이썬>   # release/patcher, release/python 채우기
-python scripts/make_release.py 0.1                 # 배포 ZIP 두 개 생성
+python scripts/make_patcher.py 0.2 --python <임베디드 파이썬>   # release/patcher, release/python 채우기
+python scripts/make_release.py 0.2                 # 배포 ZIP 두 개 생성
 ```
 
 빌드 결과 `out/init.jp`, `out/init.dict`는 v0.1 배포본과 바이트 단위로 같습니다.
