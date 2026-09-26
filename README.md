@@ -3,11 +3,12 @@
 *Metroid Prime: Federation Force* (닌텐도 3DS, 일본판 `CTR-P-BCAJ`) 비공식 한국어 팬 패치입니다.
 대사와 문장은 북미판 원문을 기준으로 번역했고, 용어와 고유명사는 일본판 표기를 따랐습니다.
 
-**제작: arqhive** · **최신 버전: [v0.2](https://github.com/arqhive/mpff-korean-translation/releases/tag/v0.2)**
+**제작: arqhive** · **최신 버전: [v0.3](https://github.com/arqhive/mpff-korean-translation/releases/tag/v0.3)**
 
 - 게임 내 문자열 2,119개를 모두 번역했습니다(대사, 브리핑, 메뉴, HUD, 칩 설명, 데이터뱅크 로그, 시스템 메시지).
 - 폰트 아틀라스를 교체해 한글 775자를 넣었습니다(Pretendard 기반).
-- HOME 메뉴 배너와 아이콘도 한글화했습니다. 이 부분은 패처로 한글판 CIA를 만들 때 적용됩니다.
+- 게임 안 타이틀 띠 2종(「메트로이드 프라임 페더레이션 포스」, 「메트로이드 프라임 블라스트 볼」)도 한글로 바꿨습니다. 게임 그래픽에 일본어가 들어간 것은 이 둘뿐입니다.
+- HOME 메뉴 배너와 아이콘도 한글화했습니다. 배너는 패처로 한글판 CIA를 만들 때 적용되며, 게임 안 타이틀 띠와 같은 그림을 씁니다.
 - 배포본은 두 가지입니다. `init.jp`와 `init.dict` 두 파일만 바꾸는 LayeredFS 패치, 그리고 가진 일본판 CIA·3DS를 한글판으로 만들어 주는 패처입니다.
 
 > 이 저장소에는 **게임 데이터(롬·디스크 이미지, 추출한 원문 대사, 그래픽, 스크린샷)가 들어 있지 않습니다.**
@@ -25,14 +26,16 @@
 
 게임 안 한글은 두 방법이 같습니다. 하나만 고르면 됩니다.
 
-| | 방법 A `MPFF_KO_v0.2_LayeredFS.zip` | 방법 B `MPFF_KO_v0.2_Patcher.zip` |
+| | 방법 A `MPFF_KO_v0.3_LayeredFS.zip` | 방법 B `MPFF_KO_v0.3_Patcher.zip` |
 |---|---|---|
 | 방식 | Luma3DS 게임 패치(LayeredFS)로 덮어씌웁니다 | 가진 일본판 CIA·3DS를 한글판으로 새로 만듭니다 |
+| 게임 안 타이틀 띠 | 한글로 나옵니다 | 한글로 나옵니다 |
 | HOME 메뉴 제목·배너 | 일본어로 남습니다 | 한글로 나옵니다 |
+| 내려받는 크기 | 9MB | 22MB |
 | 드는 수고 | 파일 복사 몇 초 | 윈도우 PC에서 10분 안쪽, 여유 공간 6GB |
 | 되돌리기 | 폴더만 지우면 됩니다 | 원본 CIA를 다시 설치해야 합니다 |
 
-두 ZIP 모두 [배포 페이지](https://github.com/arqhive/mpff-korean-translation/releases/tag/v0.2)에 있습니다.
+두 ZIP 모두 [배포 페이지](https://github.com/arqhive/mpff-korean-translation/releases/tag/v0.3)에 있습니다.
 
 #### 방법 A. LayeredFS
 
@@ -42,6 +45,8 @@
    sd:/luma/titles/000400000016CE00/locale.txt
    sd:/luma/titles/000400000016CE00/romfs/init.jp
    sd:/luma/titles/000400000016CE00/romfs/init.dict
+   sd:/luma/titles/000400000016CE00/romfs/FrontEnd/Persistent.data
+   sd:/luma/titles/000400000016CE00/romfs/FrontEnd_BattleBall/Persistent.data
    ```
 
 2. Luma3DS 설정에서 **Enable game patching**을 켭니다. 본체를 켤 때 SELECT를 누른 채로 두면 설정 화면이 나옵니다.
@@ -71,7 +76,7 @@ Luma3DS 기능이라 CIA에 담을 수 없어서, 패처로 만든 CIA를 설치
 
 ### 파일 확인값
 
-LayeredFS 패치라 롬 전체가 아니라 바뀌는 두 파일을 비교합니다. 원본은 일본판 romfs의 파일, 패치는 배포 ZIP에 든 파일입니다. 이 두 파일은 v0.1과 v0.2가 같습니다.
+LayeredFS 패치라 롬 전체가 아니라 바뀌는 파일을 비교합니다. 원본은 일본판 romfs의 파일, 패치는 배포 ZIP에 든 파일입니다. 텍스트를 담은 두 파일은 v0.1부터 내용이 같습니다.
 
 | 항목 | 원본 `init.jp` | 원본 `init.dict` | 패치 `init.jp` | 패치 `init.dict` |
 |---|---|---|---|---|
@@ -82,6 +87,13 @@ LayeredFS 패치라 롬 전체가 아니라 바뀌는 두 파일을 비교합니
 
 원본 파일 위치 예: 일본판 CIA의 romfs 루트(`romfs/init.jp`, `romfs/init.dict`).
 
+타이틀 띠가 든 두 파일은 **크기가 원본과 같습니다**(텍스처를 제자리에 덮어쓰기 때문입니다).
+
+| 파일 | 크기 | 원본 MD5 | 패치 MD5 (v0.3) |
+|---|---|---|---|
+| `FrontEnd/Persistent.data` | 11,244,228 바이트 | `d387e2cc2598e25ed7922c9fc9f1cee2` | `18cabac65645398a1dbba00807678b1a` |
+| `FrontEnd_BattleBall/Persistent.data` | 7,888,032 바이트 | `37262db314c3f8dc4078648b0a40490c` | `bfebbae88a2bd5b4e4d7b1c9b96871bf` |
+
 ### 실행 환경
 
 - **확인함**: 3DS + Luma3DS(LayeredFS), 3DS(패처로 만든 CIA 설치), Azahar.
@@ -89,6 +101,8 @@ LayeredFS 패치라 롬 전체가 아니라 바뀌는 두 파일을 비교합니
 ### 알려진 문제
 
 - LayeredFS로는 HOME 메뉴의 제목과 배너가 바뀌지 않습니다. 3DS가 설치된 타이틀의 메타데이터에서 읽기 때문이며, 패처로 한글판 CIA를 만들면 바뀝니다.
+- 타이틀 띠 4장(16KB)을 바꾸느라 그 그림이 든 pak 두 개(19MB)를 통째로 배포합니다. LayeredFS가 파일 단위로만 교체되기 때문입니다.
+- 시리즈 로고(`METROID PRIME`, `FEDERATION FORCE`, `BLAST BALL`)와 A/B/X/Y 버튼 글리프는 원문 그대로 두었습니다.
 
 ## 개발자용: 직접 빌드
 
@@ -103,8 +117,9 @@ LayeredFS 패치라 롬 전체가 아니라 바뀌는 두 파일을 비교합니
 
 ```bash
 python scripts/build_patch.py                      # tl/ko.json -> out/init.jp, out/init.dict
-python scripts/make_patcher.py 0.2 --python <임베디드 파이썬>   # release/patcher, release/python 채우기
-python scripts/make_release.py 0.2                 # 배포 ZIP 두 개 생성
+python scripts/build_graphics.py                   # graphics/*.png -> out/romfs/...
+python scripts/make_patcher.py 0.3 --python <임베디드 파이썬>   # release/patcher, release/python 채우기
+python scripts/make_release.py 0.3                 # 배포 ZIP 두 개 생성
 ```
 
 빌드 결과 `out/init.jp`, `out/init.dict`는 v0.1 배포본과 바이트 단위로 같습니다.
@@ -138,6 +153,7 @@ python scripts/build_patch.py          # out/init.jp, out/init.dict 생성
 
 ```
 scripts/     빌드 도구 (아래 표 참고)
+graphics/    게임 안 타이틀 띠·HOME 배너 띠의 한글 원본 PNG
 tl/          번역(ko.json), 검수 왕복 도구, tl/history/는 번역 당시 일괄 적용 스크립트
 docs/        FORMAT.md 파일 구조 정리, BUILD.md 빌드·CIA 재빌드 안내, 릴리즈 노트 사본(docs/releases/)
 fonts/       Pretendard SemiBold·Bold와 라이선스(SIL OFL 1.1)
@@ -149,11 +165,14 @@ release/     사용자 설명서, 패처 진입점(patch.py·패치하기.bat), 
 |---|---|
 | `build_patch.py` | 번역을 읽어 `init.jp`, `init.dict` 생성(메인) |
 | `build_banner.py` | 배너·아이콘을 한글로 바꾸고 ExeFS 재구성 |
+| `build_graphics.py` | 타이틀 띠를 넣은 romfs 파일 생성 (`out/romfs/`) |
 | `build_cia.py` | 일본판 CIA·3DS로 한글판 CIA·3DS 생성(개발용) |
 | `ffpatch.py` | 위 작업의 핵심. 배포 패처도 같은 파일을 쓴다 |
 | `make_patcher.py` | 배포 패처 꾸리기(payload, lib, bin, 임베디드 파이썬) |
 | `make_banner_strip.py` | 배너 띠(256×16) 한글 이미지 생성 |
 | `nlgpak.py` | NLG pak 컨테이너, 리소스 인덱스, 문자열 테이블, `.dict` |
+| `nlgtex.py` | pak 안 텍스처 찾기, ETC1·ETC1A4·선형 포맷 디코더와 ETC1A4 인코더 |
+| `extract_tex.py` | pak 안 텍스처를 전부 PNG로 뽑기(조사용) |
 | `nlgfont.py` | 모턴 타일 코덱, 폰트 정의 파서 |
 | `fontlib.py` | 폰트 한 벌 로드, 글리프 배치 계산 |
 | `lz11.py` | LZ11 압축·해제(배너 CGFX) |

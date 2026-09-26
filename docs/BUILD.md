@@ -147,14 +147,15 @@ python scripts/build_cia.py --cia "일본판.3ds" --out "한글판.3ds"
 
 ```bash
 python scripts/build_patch.py                                         # out/init.jp, out/init.dict
-python scripts/make_patcher.py 0.2 --python <임베디드 파이썬 폴더나 zip>   # release/patcher, release/python
-python scripts/make_release.py 0.2                                     # ZIP 두 개
+python scripts/build_graphics.py                                      # out/romfs/... (타이틀 띠)
+python scripts/make_patcher.py 0.3 --python <임베디드 파이썬 폴더나 zip>   # release/patcher, release/python
+python scripts/make_release.py 0.3                                     # ZIP 두 개
 ```
 
 | 파일 | 내용 |
 |---|---|
-| `MPFF_KO_v0.2_LayeredFS.zip` | `luma/titles/.../romfs` 두 파일 + `locale.txt` |
-| `MPFF_KO_v0.2_Patcher.zip` | `패치하기.bat` + `patcher/` + `python/` + `locale.txt` |
+| `MPFF_KO_v0.3_LayeredFS.zip` | `luma/titles/.../romfs` (텍스트 2개 + 타이틀 띠가 든 pak 2개) + `locale.txt` |
+| `MPFF_KO_v0.3_Patcher.zip` | `패치하기.bat` + `patcher/` + `python/` + `locale.txt` |
 
 - 패처에는 **게임 데이터가 들어가지 않는다.** payload 는 한글 `init.jp`·`init.dict`,
   배너 띠 그림(`common6_rgba8.bin`), 게임 이름, 원본 MD5 뿐이다. 배너·아이콘은
@@ -168,7 +169,32 @@ python scripts/make_release.py 0.2                                     # ZIP 두
 - 첨부 파일 이름에 한글을 쓰면 GitHub 이 지운다. 릴리즈에 올릴 때 설명서는
   `README_KO.txt` 로 올린다(ZIP 안에서는 `README_한국어.txt` 그대로).
 
-## 4. 번역 고치기
+## 4. 게임 안 그래픽 고치기
+
+일본어가 박힌 그래픽은 타이틀 띠 2종뿐이다. 한글 원본은 `graphics/` 에 있다.
+
+```bash
+python scripts/build_graphics.py     # graphics/*.png -> out/romfs/FrontEnd*/Persistent.data
+```
+
+| 파일 | 쓰이는 곳 |
+|---|---|
+| `graphics/title_strip_ff.png` | 게임 안 타이틀 띠(페더레이션 포스) + **HOME 메뉴 배너 띠** |
+| `graphics/title_strip_bb.png` | 게임 안 타이틀 띠(블라스트 볼) |
+
+배너 띠는 `build_banner.py` 가 같은 파일을 읽는다. 그래서 HOME 메뉴와 게임 안 타이틀의
+글자체가 같다. 배너는 RGBA8 이라 PNG 가 손실 없이 들어가고, 게임 안 띠는 ETC1A4 라
+다시 인코딩된다.
+
+- **PNG 는 반드시 256x16 RGBA 여야 한다.** 빌더가 크기를 검사한다.
+- **텍스처 크기를 바꿀 수 없다.** pak 안 텍스처 오프셋이 누적합이라 1바이트만 커져도
+  뒤 텍스처가 전부 밀린다. 빌더가 인코딩 결과를 원본 크기와 대조하고, 파일 크기가
+  달라지면 실패한다.
+- 되읽어 확인까지 빌더가 한다. 자세한 구조는 [FORMAT.md](FORMAT.md#게임-안-그래픽--텍스처-구조) 를 보라.
+- 다른 텍스처를 고치려면 `scripts/build_graphics.py` 의 `TARGETS` 에 (pak 경로, 텍스처 번호)
+  를 더하면 된다. 번호는 `python scripts/extract_tex.py --list <pak>` 으로 본다.
+
+## 5. 번역 고치기
 
 [README](../README.md#번역-수정) 를 보라. `tl/review_io.py` 로 검수용 JSON 을
 주고받는다.

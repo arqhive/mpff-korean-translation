@@ -3,8 +3,9 @@
 
 payload 폴더 구조
   manifest.json        버전, 타이틀 ID, 교체 대상 원본 파일 MD5
-  romfs/init.jp        게임 안 텍스트 + 한글 폰트
-  romfs/init.dict      위 파일의 청크 표 (짝으로 넣어야 한다)
+  romfs/...            교체할 romfs 파일 (LayeredFS 폴더와 같은 구조)
+                       init.jp = 게임 안 텍스트 + 한글 폰트, init.dict = 그 청크 표(짝으로 넣어야 한다),
+                       FrontEnd*/Persistent.data = 게임 안 타이틀 띠
   common6_rgba8.bin    배너 띠(COMMON6 256x16 RGBA8) 한글판 — 미리 인코딩해 둔 것
   titles.json          HOME 메뉴 짧은 제목·긴 제목·발행사
 
@@ -40,7 +41,6 @@ import lz11
 TID = '000400000016ce00'
 UPDATE_TID = '0004000e0016ce00'
 COMMON6_TXOB = 0x3924             # 배너 CGFX 안 COMMON6 텍스처의 TXOB 위치
-PAYLOAD_FILES = ('init.jp', 'init.dict')
 
 log = print
 
@@ -373,13 +373,14 @@ def _patch(src, dst, payload, bindir, work, key_extra):
         if not os.path.exists(p) or md5_file(p) != want:
             raise SystemExit('원본 파일이 다릅니다: %s. 이미 패치한 파일이거나 다른 버전입니다.' % rel)
     n = 0
-    for name in PAYLOAD_FILES:
-        s = os.path.join(romfs_dir, name)
-        d = W(os.path.join('rx', name))
-        if not os.path.exists(d):
-            raise SystemExit('원본에 없는 파일: ' + name)
-        shutil.copyfile(s, d)
-        n += 1
+    for root, _, files in os.walk(romfs_dir):
+        for f in files:
+            rel = os.path.relpath(os.path.join(root, f), romfs_dir)
+            d = W(os.path.join('rx', rel))
+            if not os.path.exists(d):
+                raise SystemExit('원본에 없는 파일: ' + rel.replace(os.sep, '/'))
+            shutil.copyfile(os.path.join(root, f), d)
+            n += 1
     log('게임 안 한글 파일 %d개 교체' % n)
     T.run('3dstool', ['-cvtf', 'romfs', 'romfs.bin', '--romfs-dir', 'rx'], 'cromfs')
     shutil.rmtree(W('rx'))

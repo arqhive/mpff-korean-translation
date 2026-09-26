@@ -2,13 +2,14 @@
 """배포 ZIP 두 개 만들기.
 
   python scripts/build_patch.py                                  # out/init.jp · out/init.dict
-  python scripts/make_patcher.py 0.2 --python <임베디드 파이썬>    # release/patcher · release/python
-  python scripts/make_release.py 0.2
+  python scripts/make_patcher.py 0.3 --python <임베디드 파이썬>    # release/patcher · release/python
+  python scripts/make_release.py 0.3
 
 release/MPFF_KO_v<버전>_LayeredFS.zip
   luma/titles/000400000016CE00/locale.txt         빼면 크래시한다
   luma/titles/000400000016CE00/romfs/init.jp      게임 안 텍스트 + 한글 폰트
   luma/titles/000400000016CE00/romfs/init.dict    위 파일의 청크 표
+  luma/titles/000400000016CE00/romfs/FrontEnd*/Persistent.data   게임 안 타이틀 띠
   README_한국어.txt, LICENSE.txt
 release/MPFF_KO_v<버전>_Patcher.zip
   MPFF_KO_v<버전>_Patcher/패치하기.bat, patcher/, python/    일본판 CIA·3DS 를 한글판으로 만드는 패처
@@ -44,7 +45,7 @@ def add_tree(z, src, arc):
 
 
 def main():
-    ver = sys.argv[1] if len(sys.argv) > 1 else "0.2"
+    ver = sys.argv[1] if len(sys.argv) > 1 else "0.3"
     out_dir = os.path.join(ROOT, "out")
     rel = os.path.join(ROOT, "release")
     romfs = f"luma/titles/{TITLE_ID}/romfs"
@@ -54,6 +55,11 @@ def main():
 
     items = [(os.path.join(out_dir, "init.jp"), f"{romfs}/init.jp"),
              (os.path.join(out_dir, "init.dict"), f"{romfs}/init.dict")]
+    gr = os.path.join(out_dir, "romfs")                   # 게임 안 그래픽(타이틀 띠)
+    for root, _, files in os.walk(gr):
+        for f in sorted(files):
+            sub = os.path.relpath(os.path.join(root, f), gr).replace(os.sep, "/")
+            items.append((os.path.join(root, f), f"{romfs}/{sub}"))
     for src, _ in items + docs:
         if not os.path.exists(src):
             raise SystemExit(f"{src} 가 없다. build_patch.py 를 먼저 돌려라.")

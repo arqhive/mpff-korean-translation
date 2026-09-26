@@ -2,7 +2,7 @@
 """CIA·3DS 패처 꾸리기 → release/patcher (payload·lib·bin) + release/python (임베디드 파이썬)
 
   python scripts/build_patch.py                       # 먼저 out/init.jp · out/init.dict 를 만든다
-  python scripts/make_patcher.py 0.2 [--python <임베디드 파이썬 폴더 또는 zip>]
+  python scripts/make_patcher.py 0.3 [--python <임베디드 파이썬 폴더 또는 zip>]
 
 payload 에는 한글 init.jp·init.dict, 배너 띠 그림, 게임 이름, 원본 파일 MD5 만 담는다.
 배너·아이콘은 사용자 파일 안의 것을 고쳐 쓰므로 원본 게임 데이터는 들어가지 않는다.
@@ -41,15 +41,26 @@ def build_payload(dst, version):
     os.makedirs(os.path.join(dst, "romfs"))
 
     src_md5 = {}
-    for name in ffpatch.PAYLOAD_FILES:
-        ko = os.path.join(ROOT, "out", name)
-        jp = os.path.join(ROOT, "base_jp", "romfs", name)
+
+    def take(ko, rel):
+        """한글판 파일 하나를 payload 에 넣고, 같은 자리 일본판 원본의 MD5 를 적어 둔다."""
+        jp = os.path.join(ROOT, "base_jp", "romfs", *rel.split("/"))
         if not os.path.exists(ko):
-            raise SystemExit(f"{ko} 가 없다. 먼저 python scripts/build_patch.py 를 돌려라.")
+            raise SystemExit(f"{ko} 가 없다. build_patch.py 와 build_graphics.py 를 먼저 돌려라.")
         if not os.path.exists(jp):
             raise SystemExit(f"{jp} 가 없다. 일본판 romfs 를 base_jp/romfs/ 에 풀어 둬야 한다.")
-        shutil.copyfile(ko, os.path.join(dst, "romfs", name))
-        src_md5[name] = ffpatch.md5_file(jp)
+        d = os.path.join(dst, "romfs", *rel.split("/"))
+        os.makedirs(os.path.dirname(d), exist_ok=True)
+        shutil.copyfile(ko, d)
+        src_md5[rel] = ffpatch.md5_file(jp)
+
+    for name in ("init.jp", "init.dict"):                 # 게임 안 텍스트 + 한글 폰트
+        take(os.path.join(ROOT, "out", name), name)
+    gr = os.path.join(ROOT, "out", "romfs")               # 게임 안 그래픽(타이틀 띠)
+    for root, _, files in os.walk(gr):
+        for f in sorted(files):
+            rel = os.path.relpath(os.path.join(root, f), gr).replace(os.sep, "/")
+            take(os.path.join(root, f), rel)
 
     if not os.path.exists(build_banner.STRIP):
         print("배너 띠 이미지가 없어 먼저 만든다")
@@ -87,7 +98,7 @@ def copy_python(src, dst):
 
 
 def main():
-    ver = sys.argv[1] if len(sys.argv) > 1 else "0.2"
+    ver = sys.argv[1] if len(sys.argv) > 1 else "0.3"
     py = sys.argv[sys.argv.index("--python") + 1] if "--python" in sys.argv else None
 
     n = build_payload(os.path.join(PATCHER, "payload"), ver)

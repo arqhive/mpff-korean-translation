@@ -22,7 +22,9 @@ if getattr(sys.stdout, "encoding", "").lower() not in ("utf-8", "utf8"):
 import lz11
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STRIP = os.path.join(ROOT, "out", "banner", "COMMON6_ko_up.png")
+# 배너 띠 원본. 게임 안 타이틀 띠(FrontEnd 의 ETC1A4 텍스처)와 같은 그림을 쓴다.
+# HOME 메뉴와 게임 안 타이틀이 같은 글자체로 보이게 하려는 것이다.
+STRIP = os.path.join(ROOT, "graphics", "title_strip_ff.png")
 
 SHORT = "페더레이션 포스"
 LONG = "메트로이드 프라임\n페더레이션 포스"
@@ -150,9 +152,7 @@ def patch_exefs_file(exefs_path):
 
     if "banner" in src:
         if not os.path.exists(STRIP):
-            print("배너 띠 이미지가 없어 먼저 만든다")
-            import make_banner_strip
-            make_banner_strip.main()
+            raise SystemExit(f"{STRIP} 가 없다. graphics/ 의 띠 원본이 있어야 한다.")
         print("배너 패치")
         patches["banner"] = patch_banner(src["banner"])
     else:
