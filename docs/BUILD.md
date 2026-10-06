@@ -154,8 +154,8 @@ python scripts/make_release.py 0.3                                     # ZIP 두
 
 | 파일 | 내용 |
 |---|---|
-| `MPFF_KO_v0.3_LayeredFS.zip` | `luma/titles/.../romfs` (텍스트 2개 + 타이틀 띠가 든 pak 2개) + `locale.txt` |
-| `MPFF_KO_v0.3_Patcher.zip` | `패치하기.bat` + `patcher/` + `python/` + `locale.txt` |
+| `BCAJ_KPatch_v0.3_LayeredFS.zip` | `luma/titles/.../romfs` (텍스트 2개 + 타이틀 띠가 든 pak 2개) + `locale.txt` |
+| `BCAJ_KPatch_v0.3_CIA.zip` | `패치하기.bat` + `patcher/` + `python/` + `locale.txt` |
 
 - 패처에는 **게임 데이터가 들어가지 않는다.** payload 는 한글 `init.jp`·`init.dict`,
   배너 띠 그림(`common6_rgba8.bin`), 게임 이름, 원본 MD5 뿐이다. 배너·아이콘은

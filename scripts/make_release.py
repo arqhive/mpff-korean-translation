@@ -5,15 +5,15 @@
   python scripts/make_patcher.py 0.3 --python <임베디드 파이썬>    # release/patcher · release/python
   python scripts/make_release.py 0.3
 
-release/MPFF_KO_v<버전>_LayeredFS.zip
+release/BCAJ_KPatch_v<버전>_LayeredFS.zip
   luma/titles/000400000016CE00/locale.txt         빼면 크래시한다
   luma/titles/000400000016CE00/romfs/init.jp      게임 안 텍스트 + 한글 폰트
   luma/titles/000400000016CE00/romfs/init.dict    위 파일의 청크 표
   luma/titles/000400000016CE00/romfs/FrontEnd*/Persistent.data   게임 안 타이틀 띠
   README_한국어.txt, LICENSE.txt
-release/MPFF_KO_v<버전>_Patcher.zip
-  MPFF_KO_v<버전>_Patcher/패치하기.bat, patcher/, python/    일본판 CIA·3DS 를 한글판으로 만드는 패처
-  MPFF_KO_v<버전>_Patcher/luma/...                           패처로 설치해도 locale.txt 는 필요하다
+release/BCAJ_KPatch_v<버전>_CIA.zip
+  BCAJ_KPatch_v<버전>_CIA/패치하기.bat, patcher/, python/    일본판 CIA·3DS 를 한글판으로 만드는 패처
+  BCAJ_KPatch_v<버전>_CIA/luma/...                           패처로 설치해도 locale.txt 는 필요하다
   README_한국어.txt, LICENSE.txt
 
 locale.txt 는 두 ZIP 모두에 들어간다. 일본판이 아닌 리전 본체(한국판 등)에서는
@@ -30,6 +30,8 @@ if getattr(sys.stdout, "encoding", "").lower() not in ("utf-8", "utf8"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 TITLE_ID = "000400000016CE00"
+CODE = "BCAJ"          # 제품 코드. 첨부 이름 규칙은 [코드]_KPatch_v[버전][_꼬리].zip 이다
+                       # (arqhive 사이트가 이 이름으로 직접 다운로드 링크를 찾는다)
 LOCALE = "JPN JP"      # 타 리전 본체에서 크래시를 막는다. 빼면 안 된다.
 
 
@@ -64,7 +66,7 @@ def main():
         if not os.path.exists(src):
             raise SystemExit(f"{src} 가 없다. build_patch.py 를 먼저 돌려라.")
 
-    a = os.path.join(rel, f"MPFF_KO_v{ver}_LayeredFS.zip")
+    a = os.path.join(rel, f"{CODE}_KPatch_v{ver}_LayeredFS.zip")
     with zipfile.ZipFile(a, "w", zipfile.ZIP_DEFLATED) as z:
         for src, name in items:
             z.write(src, name)
@@ -80,8 +82,8 @@ def main():
         raise SystemExit(f"패처가 준비되지 않았다. 먼저 python scripts/make_patcher.py {ver} "
                          f"--python <임베디드 파이썬> 을 돌려라.")
 
-    b = os.path.join(rel, f"MPFF_KO_v{ver}_Patcher.zip")
-    top = f"MPFF_KO_v{ver}_Patcher"
+    b = os.path.join(rel, f"{CODE}_KPatch_v{ver}_CIA.zip")
+    top = f"{CODE}_KPatch_v{ver}_CIA"
     with zipfile.ZipFile(b, "w", zipfile.ZIP_DEFLATED) as z:
         z.write(os.path.join(rel, "패치하기.bat"), f"{top}/패치하기.bat")
         n = add_tree(z, patcher, f"{top}/patcher")
