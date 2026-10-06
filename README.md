@@ -26,7 +26,7 @@
 
 게임 안 한글은 두 방법이 같습니다. 하나만 고르면 됩니다.
 
-| | 방법 A `MPFF_KO_v0.3_LayeredFS.zip` | 방법 B `MPFF_KO_v0.3_Patcher.zip` |
+| | 방법 A `BCAJ_KPatch_v0.3_LayeredFS.zip` | 방법 B `BCAJ_KPatch_v0.3_CIA.zip` |
 |---|---|---|
 | 방식 | Luma3DS 게임 패치(LayeredFS)로 덮어씌웁니다 | 가진 일본판 CIA·3DS를 한글판으로 새로 만듭니다 |
 | 게임 안 타이틀 띠 | 한글로 나옵니다 | 한글로 나옵니다 |
