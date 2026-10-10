@@ -56,11 +56,13 @@ def build_payload(dst, version):
 
     for name in ("init.jp", "init.dict"):                 # 게임 안 텍스트 + 한글 폰트
         take(os.path.join(ROOT, "out", name), name)
-    gr = os.path.join(ROOT, "out", "romfs")               # 게임 안 그래픽(타이틀 띠)
-    for root, _, files in os.walk(gr):
-        for f in sorted(files):
-            rel = os.path.relpath(os.path.join(root, f), gr).replace(os.sep, "/")
-            take(os.path.join(root, f), rel)
+
+    # 게임 안 그래픽(타이틀 띠)은 pak 을 통째로 담지 않는다. 띠 블롭(4KB 두 개)과
+    # 덮어쓸 위치만 넣고 사용자 파일을 제자리에서 고친다 — payload 가 19MB 에서 8KB 로 준다.
+    tp_src = os.path.join(ROOT, "out", "texpatch")
+    if not os.path.isdir(tp_src):
+        raise SystemExit("out/texpatch 가 없다. 먼저 python scripts/build_graphics.py 를 돌려라.")
+    shutil.copytree(tp_src, os.path.join(dst, "texpatch"))
 
     if not os.path.exists(build_banner.STRIP):
         print("배너 띠 이미지가 없어 먼저 만든다")

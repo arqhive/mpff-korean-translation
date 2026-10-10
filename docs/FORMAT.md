@@ -330,6 +330,28 @@ HOME 메뉴 배너의 `COMMON6` 띠와 같은 디자인이라 같은 원본 그�
 A/B/X/Y 버튼 글리프, 퍼센트·배수 숫자는 영문이라 그대로 두었다.
 `credits.txt` / `creditsbb.txt` 도 영문 스태프 이름뿐이다.
 
+## 업데이트 v1.2.0 과 겹치는 파일
+
+업데이트 romfs 에는 파일이 10개뿐인데 그중에 **타이틀 띠가 든 `FrontEnd/Persistent.data`
+가 있다**. 본편 것과 크기가 다르지만(11,244,228 대 11,245,956) **텍스처 233장은 전부 같다**.
+`global.data`(262장), `Battle_Ball_01/Persistent.data`(151장)도 텍스처는 본편과 같다.
+업데이트가 바꾼 것은 코드·스크립트 쪽이다.
+
+| 업데이트 romfs | 본편에도 있나 | 내용 |
+|---|---|---|
+| `FrontEnd/Persistent.{data,dict,jp}` | 있다 | 다르다 — **타이틀 띠가 여기에도 있다** |
+| `Battle_Ball_01/Persistent.{data,dict,jp}` | 있다 | 다르다 |
+| `global.{data,dict}` | 있다 | 다르다 (`global.jp` 는 같다) |
+| `ini/skuinfo/Coop_Patch1-JP.ini` | 없다 | — |
+
+그래서 **업데이트를 설치한 본체에서는 본편만 패치해서는 타이틀 띠가 일본어로 남는다.**
+LayeredFS 로도 못 덮는다([[3ds-layeredfs-same-name-limit]] 와 같은 상황) — Luma 는 본편 TID
+폴더 하나를 두 아카이브에 모두 적용하므로, 본편판을 얹으면 업데이트 쪽 요청에도 그것이
+적용된다. 배포에서 이 파일을 빼고, 패처로 **업데이트 CIA 도 따로 패치**하는 쪽을 택했다.
+
+업데이트 romfs 의 `.jp` 세 개에는 문자열 테이블이 없다. 번역이 필요한 텍스트는 본편
+`init.jp` 하나뿐이다.
+
 ## CXI 재빌드
 
 ```

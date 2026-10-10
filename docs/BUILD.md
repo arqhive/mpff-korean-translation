@@ -110,10 +110,14 @@ python scripts/build_cia.py --cia "일본판.3ds" --out "한글판.3ds"
 
 결과 형식은 `--out` 확장자로 정한다. `--tools`, `--work`, `--keep` 을 쓸 수 있다.
 
-업데이트 타이틀은 makerom 으로 재현할 수 없다. 콘텐츠 인덱스가 원래 0·2번
-(1번 없음)인데 **makerom 은 인덱스가 0 부터 연속이어야 한다** — 0,2 로 주면
-`[NCCH ERROR] Content not a valid ncch` 로 실패한다(암호화 문제가 아니다. 평문으로
-다시 싸도 같다). `ffpatch` 는 이 경우를 미리 걸러 낸다.
+**업데이트 타이틀도 만들 수 있다.** makerom 은 콘텐츠 인덱스가 0 부터 이어져야 해서
+업데이트(0·2)를 그대로 주면 `[NCCH ERROR] Content not a valid ncch` 로 실패한다. 그래서
+**0·1 로 묶은 뒤 되돌린다**(`ffpatch.fix_cia`):
+
+1. CIA 헤더 `0x20` 의 콘텐츠 번호 비트맵을 다시 쓴다 (`c0` -> `a0`).
+2. TMD 의 콘텐츠 레코드 번호를 0·2 로 고치고 타이틀 버전(1.2.0)을 되돌린다.
+3. TMD 안 해시 두 개를 다시 만든다 — content info record 의 SHA-256 과
+   그 레코드 묶음의 SHA-256. 서명은 CFW 가 무시하지만 이 해시는 설치할 때 본다.
 
 ### 스크립트가 하는 일
 
@@ -148,14 +152,14 @@ python scripts/build_cia.py --cia "일본판.3ds" --out "한글판.3ds"
 ```bash
 python scripts/build_patch.py                                         # out/init.jp, out/init.dict
 python scripts/build_graphics.py                                      # out/romfs/... (타이틀 띠)
-python scripts/make_patcher.py 0.3 --python <임베디드 파이썬 폴더나 zip>   # release/patcher, release/python
-python scripts/make_release.py 0.3                                     # ZIP 두 개
+python scripts/make_patcher.py 0.3.1 --python <임베디드 파이썬 폴더나 zip>   # release/patcher, release/python
+python scripts/make_release.py 0.3.1                                     # ZIP 두 개
 ```
 
 | 파일 | 내용 |
 |---|---|
-| `BCAJ_KPatch_v0.3_LayeredFS.zip` | `luma/titles/.../romfs` (텍스트 2개 + 타이틀 띠가 든 pak 2개) + `locale.txt` |
-| `BCAJ_KPatch_v0.3_CIA.zip` | `패치하기.bat` + `patcher/` + `python/` + `locale.txt` |
+| `BCAJ_KPatch_v0.3.1_LayeredFS.zip` | `luma/titles/.../romfs` (텍스트 2개 + 타이틀 띠가 든 pak 2개) + `locale.txt` |
+| `BCAJ_KPatch_v0.3.1_CIA.zip` | `패치하기.bat` + `patcher/` + `python/` + `locale.txt` |
 
 - 패처에는 **게임 데이터가 들어가지 않는다.** payload 는 한글 `init.jp`·`init.dict`,
   배너 띠 그림(`common6_rgba8.bin`), 게임 이름, 원본 MD5 뿐이다. 배너·아이콘은
@@ -181,6 +185,21 @@ python scripts/build_graphics.py     # graphics/*.png -> out/romfs/FrontEnd*/Per
 |---|---|
 | `graphics/title_strip_ff.png` | 게임 안 타이틀 띠(페더레이션 포스) + **HOME 메뉴 배너 띠** |
 | `graphics/title_strip_bb.png` | 게임 안 타이틀 띠(블라스트 볼) |
+
+같은 띠가 세 pak 에 들어 있다. 본편 `FrontEnd`·`FrontEnd_BattleBall`, 그리고 **업데이트 v1.2.0 의
+`FrontEnd`** 다. 업데이트 pak 은 `upd_jp/romfs/` 에 있어야 한다(업데이트 CIA 에서 뽑는다).
+없으면 본편만 만들고 `out/texpatch/patch.json` 의 업데이트 항목은 그대로 둔다.
+
+`build_graphics.py` 가 만드는 것:
+
+| | |
+|---|---|
+| `out/romfs/`, `out/romfs_upd/` | pak 통째 (LayeredFS 배포·검증용) |
+| `out/texpatch/strip_*.bin` | 띠를 ETC1A4 로 인코딩한 4,096바이트 블롭 |
+| `out/texpatch/patch.json` | 파일 MD5 별로 **어디에 덮어쓸지**(오프셋). 배포 패처가 이것만 들고 간다 |
+
+같은 경로라도 본편판과 업데이트판은 오프셋이 다르다(`0x784c78` 대 `0x785338`). 그래서
+MD5 로 판본을 가린 뒤 그 판본의 위치에 쓴다.
 
 배너 띠는 `build_banner.py` 가 같은 파일을 읽는다. 그래서 HOME 메뉴와 게임 안 타이틀의
 글자체가 같다. 배너는 RGBA8 이라 PNG 가 손실 없이 들어가고, 게임 안 띠는 ETC1A4 라

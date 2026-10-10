@@ -30,6 +30,7 @@ PAYLOAD = os.path.join(HERE, 'payload')
 
 def ask():
     print('\n일본판 페더레이션 포스 .cia 또는 .3ds 파일 경로를 입력하세요 (파일을 이 창에 끌어다 놓아도 됩니다).')
+    print('본편과 업데이트(v1.2.0) 를 한꺼번에 놓아도 됩니다.')
     return input('> ').strip().strip('"')
 
 
@@ -64,6 +65,8 @@ def main():
         ok += 1
     print('\n%d개 중 %d개 완료.' % (len(files), ok))
     if ok:
+        print('\n※ 업데이트 v1.2.0 을 설치해 쓰고 있다면 업데이트 CIA 도 함께 패치하세요.')
+        print('  게임 안 타이틀 띠가 업데이트 쪽에도 들어 있어, 본편만 바꾸면 그 띠가 일본어로 남습니다.')
         print('\n※ 한국판·북미판 등 일본판이 아닌 본체에서는 SD 카드의 locale.txt 가 필요합니다.')
         print('  ZIP 안 luma 폴더를 SD 카드 루트에 복사하세요 (sd:/luma/titles/%s/locale.txt).'
               % man['title_id'])

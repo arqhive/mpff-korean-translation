@@ -9,7 +9,7 @@ release/BCAJ_KPatch_v<버전>_LayeredFS.zip
   luma/titles/000400000016CE00/locale.txt         빼면 크래시한다
   luma/titles/000400000016CE00/romfs/init.jp      게임 안 텍스트 + 한글 폰트
   luma/titles/000400000016CE00/romfs/init.dict    위 파일의 청크 표
-  luma/titles/000400000016CE00/romfs/FrontEnd*/Persistent.data   게임 안 타이틀 띠
+  luma/titles/000400000016CE00/romfs/FrontEnd_BattleBall/Persistent.data   타이틀 띠(블라스트 볼 쪽)
   README_한국어.txt, LICENSE.txt
 release/BCAJ_KPatch_v<버전>_CIA.zip
   BCAJ_KPatch_v<버전>_CIA/패치하기.bat, patcher/, python/    일본판 CIA·3DS 를 한글판으로 만드는 패처
@@ -33,6 +33,13 @@ TITLE_ID = "000400000016CE00"
 CODE = "BCAJ"          # 제품 코드. 첨부 이름 규칙은 [코드]_KPatch_v[버전][_꼬리].zip 이다
                        # (arqhive 사이트가 이 이름으로 직접 다운로드 링크를 찾는다)
 LOCALE = "JPN JP"      # 타 리전 본체에서 크래시를 막는다. 빼면 안 된다.
+
+# LayeredFS 로 내보내면 안 되는 파일.
+# Luma 는 본편 TID 폴더 하나를 본편·업데이트 두 아카이브에 모두 적용한다. 이 파일은
+# 업데이트 v1.2.0 romfs 에도 같은 경로로(내용은 다르게) 있어서, 업데이트를 설치한 본체에
+# 본편판을 얹으면 업데이트 쪽 요청에도 그게 적용돼 깨진다. 메인 타이틀 띠를 한글로 보려면
+# 패처로 본편·업데이트 CIA 를 둘 다 만들어야 한다.
+LAYEREDFS_SKIP = {"FrontEnd/Persistent.data"}
 
 
 def add_tree(z, src, arc):
@@ -61,6 +68,8 @@ def main():
     for root, _, files in os.walk(gr):
         for f in sorted(files):
             sub = os.path.relpath(os.path.join(root, f), gr).replace(os.sep, "/")
+            if sub in LAYEREDFS_SKIP:
+                continue
             items.append((os.path.join(root, f), f"{romfs}/{sub}"))
     for src, _ in items + docs:
         if not os.path.exists(src):

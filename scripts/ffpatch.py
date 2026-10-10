@@ -191,10 +191,7 @@ def key_error(e):
 
 
 def wrong_title(tid):
-    if tid == UPDATE_TID:
-        return ('업데이트(v1.2.0) 파일입니다. 본편 CIA 만 패치하면 되고, 업데이트는 원본 그대로 '
-                '설치해도 한글 제목과 배너가 유지됩니다.')
-    return '일본판 페더레이션 포스(%s)가 아닙니다: %s' % (TID, tid)
+    return '일본판 페더레이션 포스(%s / 업데이트 %s)가 아닙니다: %s' % (TID, UPDATE_TID, tid)
 
 
 def raw_cci_partitions(path):
@@ -216,7 +213,7 @@ def raw_cci_partitions(path):
                 raise SystemExit('암호화된 3DS 파일입니다.' + KEY_HELP)
             if i == 0:
                 tid = '%016x' % struct.unpack_from('<Q', n, 0x118)[0]
-                if tid != TID:
+                if tid not in (TID, UPDATE_TID):
                     raise SystemExit(wrong_title(tid))
             out.append((i, off * 0x200, size * 0x200))
     return out
@@ -320,7 +317,7 @@ def _patch(src, dst, payload, bindir, work, key_extra):
             cids = {}
         if rd is not None:
             pid = str(parts[0].program_id).lower() if 0 in parts else None
-            if pid != TID:
+            if pid not in (TID, UPDATE_TID):
                 raise SystemExit(wrong_title(pid))
             for idx, _ in recs:
                 log('복호화: %s %d' % ('콘텐츠' if kind == '.cia' else '파티션', idx))
@@ -343,15 +340,13 @@ def _patch(src, dst, payload, bindir, work, key_extra):
     except Exception as e:
         raise SystemExit(key_error(e))
 
-    if sorted(i for i, _ in recs) != list(range(len(recs))):
-        raise SystemExit('콘텐츠 번호가 이어져 있지 않아 다시 묶을 수 없습니다: %s'
-                         % sorted(i for i, _ in recs))
-
     with open(W('p0.ncch'), 'rb') as f:
         h = f.read(0x200)
     tid = '%016x' % struct.unpack_from('<Q', h, 0x118)[0]
-    if h[0x100:0x104] != b'NCCH' or tid != TID:
+    if h[0x100:0x104] != b'NCCH' or tid not in (TID, UPDATE_TID):
         raise SystemExit(wrong_title(tid))
+    is_update = tid == UPDATE_TID
+    log('업데이트 타이틀입니다.' if is_update else '본편입니다.')
 
     # 2) 본편 펼치기·교체
     cx = ['--header', 'hdr.bin', '--exh', 'exh.bin', '--logo', 'logo.bin', '--plain', 'plain.bin',
@@ -359,60 +354,121 @@ def _patch(src, dst, payload, bindir, work, key_extra):
     log('본편 펼치는 중...')
     T.run('3dstool', ['-xvtf', 'cxi', 'p0.ncch'] + cx, 'xcxi')
     os.remove(W('p0.ncch'))
-    ex = open(W('exefs.bin'), 'rb').read()
-    src_ex = read_exefs(ex)
-    patches = {'banner': patch_banner(src_ex['banner'], strip),
-               'icon': patch_smdh(src_ex['icon'], titles['short'], titles['long'], titles['publisher'])}
-    open(W('exefs.bin'), 'wb').write(rebuild_exefs(ex, patches))
-    log('HOME 메뉴 배너·게임 이름 교체')
+    if not is_update:                       # 업데이트에는 배너가 없고 제목도 본편 것을 쓴다
+        ex = open(W('exefs.bin'), 'rb').read()
+        src_ex = read_exefs(ex)
+        patches = {'banner': patch_banner(src_ex['banner'], strip),
+                   'icon': patch_smdh(src_ex['icon'], titles['short'], titles['long'],
+                                      titles['publisher'])}
+        open(W('exefs.bin'), 'wb').write(rebuild_exefs(ex, patches))
+        log('HOME 메뉴 배너·게임 이름 교체')
 
     T.run('3dstool', ['-xvtf', 'romfs', 'romfs.bin', '--romfs-dir', 'rx'], 'xromfs')
-    log('원본 확인 중...')
-    for rel, want in man['source_md5'].items():
-        p = W(os.path.join('rx', *rel.split('/')))
-        if not os.path.exists(p) or md5_file(p) != want:
-            raise SystemExit('원본 파일이 다릅니다: %s. 이미 패치한 파일이거나 다른 버전입니다.' % rel)
     n = 0
-    for root, _, files in os.walk(romfs_dir):
-        for f in files:
-            rel = os.path.relpath(os.path.join(root, f), romfs_dir)
-            d = W(os.path.join('rx', rel))
-            if not os.path.exists(d):
-                raise SystemExit('원본에 없는 파일: ' + rel.replace(os.sep, '/'))
-            shutil.copyfile(os.path.join(root, f), d)
-            n += 1
-    log('게임 안 한글 파일 %d개 교체' % n)
+    if not is_update:                       # init.jp·init.dict 는 본편에만 있다
+        log('원본 확인 중...')
+        for rel, want in man['source_md5'].items():
+            p = W(os.path.join('rx', *rel.split('/')))
+            if not os.path.exists(p) or md5_file(p) != want:
+                raise SystemExit('원본 파일이 다릅니다: %s. 이미 패치한 파일이거나 다른 버전입니다.' % rel)
+        for root, _, files in os.walk(romfs_dir):
+            for f in files:
+                rel = os.path.relpath(os.path.join(root, f), romfs_dir)
+                d = W(os.path.join('rx', rel))
+                if not os.path.exists(d):
+                    raise SystemExit('원본에 없는 파일: ' + rel.replace(os.sep, '/'))
+                shutil.copyfile(os.path.join(root, f), d)
+                n += 1
+        log('게임 안 한글 파일 %d개 교체' % n)
+    n += apply_texpatch(W('rx'), os.path.join(payload, 'texpatch'), is_update)
     T.run('3dstool', ['-cvtf', 'romfs', 'romfs.bin', '--romfs-dir', 'rx'], 'cromfs')
     shutil.rmtree(W('rx'))
     log('다시 묶는 중...')
     T.run('3dstool', ['-cvtf', 'cxi', 'p0.ncch'] + cx + ['--not-encrypt'], 'ccxi')
 
     # 3) CIA / 3DS 로 묶기
+    # makerom 은 콘텐츠 번호가 0 부터 이어져야 한다. 업데이트는 0·2 라서 0·1 로 묶은 뒤
+    # TMD 와 CIA 헤더의 번호를 원래대로 되돌린다.
+    order = sorted(recs)
     args = ['-f', 'cia' if out_kind == '.cia' else 'cci', '-o', 'out' + out_kind, '-ignoresign']
-    for idx, cid in recs:
-        args += ['-content', 'p%d.ncch:%d:%d' % (idx, idx, cid)]     # 3DS(CCI)도 세 칸 형식이어야 한다
+    for seq, (idx, cid) in enumerate(order):
+        args += ['-content', 'p%d.ncch:%d:%d' % (idx, seq, cid)]     # 3DS(CCI)도 세 칸 형식이어야 한다
     T.run('makerom', args, 'makerom')
-    if out_kind == '.cia' and ver:
-        fix_tmd_version(W('out.cia'), ver)
+    if out_kind == '.cia':
+        fix_cia(W('out.cia'), [idx for idx, _ in order], ver)
     if os.path.exists(dst):
         os.remove(dst)
     shutil.move(W('out' + out_kind), dst)
     return dst
 
 
-def fix_tmd_version(cia, ver):
-    """makerom 이 0 으로 써 버리는 TMD 타이틀 버전을 원본 값으로 되돌린다."""
-    want = [int(x) for x in str(ver).split('.')]
-    want = want[0] << 10 | want[1] << 4 | want[2]
+def apply_texpatch(rx, tp_dir, is_update):
+    """펼친 romfs 안 pak 의 텍스처를 제자리에서 바꾼다. 돌려주는 값은 바꾼 텍스처 수.
+
+    크기가 같아야 하므로 덮어쓸 위치(오프셋)를 patch.json 에 적어 두고 그대로 쓴다.
+    같은 경로라도 본편판과 업데이트판은 내용이 달라서 MD5 로 가린다.
+    """
+    patch = json.load(open(os.path.join(tp_dir, 'patch.json'), encoding='utf-8'))
+    blobs = {}
+    n = 0
+    for rel, variants in patch.items():
+        p = os.path.join(rx, *rel.split('/'))
+        if not os.path.exists(p):
+            continue                    # 업데이트 romfs 에는 없는 pak 이 있다
+        h = md5_file(p)
+        hit = [v for v in variants if v['md5'] == h]
+        if not hit:
+            if any(v.get('patched_md5') == h for v in variants):
+                raise SystemExit('이미 패치한 파일입니다: ' + rel)
+            raise SystemExit('원본 파일이 다릅니다: %s. 다른 버전이거나 이미 손댄 파일입니다.' % rel)
+        with open(p, 'r+b') as f:
+            for off, key in hit[0]['writes']:
+                if key not in blobs:
+                    blobs[key] = open(os.path.join(tp_dir, 'strip_%s.bin' % key), 'rb').read()
+                f.seek(off)
+                f.write(blobs[key])
+                n += 1
+    if not n:
+        raise SystemExit('바꿀 그래픽을 찾지 못했습니다.')
+    log('게임 안 타이틀 띠 %d곳 교체' % n)
+    return n
+
+
+def fix_cia(cia, want, ver):
+    """makerom 이 쓴 콘텐츠 번호와 타이틀 버전을 원본 값으로 되돌린다.
+
+    업데이트는 콘텐츠 번호가 0·2 인데 makerom 이 이어진 번호만 받아서 0·1 로 묶었다.
+    CIA 헤더의 콘텐츠 번호 비트맵과 TMD 의 번호를 고치고, TMD 안 해시 두 개를 다시 만든다.
+    (서명은 CFW 가 무시하지만 해시는 설치할 때 본다.)
+    """
+    want_ver = None
+    if ver:
+        a, b, c = (int(x) for x in str(ver).split('.'))
+        want_ver = a << 10 | b << 4 | c
     al = lambda x: (x + 63) & ~63
     with open(cia, 'r+b') as f:
-        hsize, _t, _v, clen, tlen, tmdlen, _m = struct.unpack('<IHHIIII', f.read(0x18))
+        head = bytearray(f.read(0x2020))
+        hsize, _t, _v, clen, tlen, tmdlen, _m = struct.unpack_from('<IHHIIII', head, 0)
+        for i in range(0x2000):                       # 콘텐츠 번호 비트맵
+            head[0x20 + i] = 0
+        for i in want:
+            head[0x20 + (i >> 3)] |= 0x80 >> (i & 7)
+        f.seek(0)
+        f.write(head)
+
         off = al(al(al(hsize) + clen) + tlen)
         f.seek(off)
-        sig = struct.unpack('>I', f.read(4))[0]
-        o = off + 4 + SIG[sig] + 0x9C
-        f.seek(o)
-        cur = struct.unpack('>H', f.read(2))[0]
-        if cur != want:
-            f.seek(o)
-            f.write(struct.pack('>H', want))
+        tmd = bytearray(f.read(tmdlen))
+        body = 4 + SIG[struct.unpack_from('>I', tmd, 0)[0]]
+        cnt = struct.unpack_from('>H', tmd, body + 0x9E)[0]
+        rec = body + 0xC4 + 0x900
+        for i in range(min(cnt, len(want))):
+            struct.pack_into('>H', tmd, rec + i * 0x30 + 4, want[i])
+        if want_ver is not None:
+            struct.pack_into('>H', tmd, body + 0x9C, want_ver)
+        info = body + 0xC4
+        struct.pack_into('>HH', tmd, info, 0, cnt)                     # 묶음 하나로 둔다
+        tmd[info + 4:info + 4 + 0x20] = hashlib.sha256(bytes(tmd[rec:rec + cnt * 0x30])).digest()
+        tmd[body + 0xA4:body + 0xA4 + 0x20] = hashlib.sha256(bytes(tmd[info:info + 0x24 * 64])).digest()
+        f.seek(off)
+        f.write(tmd)
