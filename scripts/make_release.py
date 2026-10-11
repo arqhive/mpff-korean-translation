@@ -2,8 +2,8 @@
 """배포 ZIP 두 개 만들기.
 
   python scripts/build_patch.py                                  # out/init.jp · out/init.dict
-  python scripts/make_patcher.py 0.3 --python <임베디드 파이썬>    # release/patcher · release/python
-  python scripts/make_release.py 0.3
+  python scripts/make_patcher.py 0.3.2 --python <임베디드 파이썬>    # release/patcher · release/python
+  python scripts/make_release.py 0.3.2
 
 release/BCAJ_KPatch_v<버전>_LayeredFS.zip
   luma/titles/000400000016CE00/locale.txt         빼면 크래시한다
@@ -54,7 +54,7 @@ def add_tree(z, src, arc):
 
 
 def main():
-    ver = sys.argv[1] if len(sys.argv) > 1 else "0.3"
+    ver = sys.argv[1] if len(sys.argv) > 1 else "0.3.2"
     out_dir = os.path.join(ROOT, "out")
     rel = os.path.join(ROOT, "release")
     romfs = f"luma/titles/{TITLE_ID}/romfs"

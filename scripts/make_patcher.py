@@ -2,7 +2,7 @@
 """CIA·3DS 패처 꾸리기 → release/patcher (payload·lib·bin) + release/python (임베디드 파이썬)
 
   python scripts/build_patch.py                       # 먼저 out/init.jp · out/init.dict 를 만든다
-  python scripts/make_patcher.py 0.3 [--python <임베디드 파이썬 폴더 또는 zip>]
+  python scripts/make_patcher.py 0.3.2 [--python <임베디드 파이썬 폴더 또는 zip>]
 
 payload 에는 한글 init.jp·init.dict, 배너 띠 그림, 게임 이름, 원본 파일 MD5 만 담는다.
 배너·아이콘은 사용자 파일 안의 것을 고쳐 쓰므로 원본 게임 데이터는 들어가지 않는다.
@@ -100,7 +100,7 @@ def copy_python(src, dst):
 
 
 def main():
-    ver = sys.argv[1] if len(sys.argv) > 1 else "0.3"
+    ver = sys.argv[1] if len(sys.argv) > 1 else "0.3.2"
     py = sys.argv[sys.argv.index("--python") + 1] if "--python" in sys.argv else None
 
     n = build_payload(os.path.join(PATCHER, "payload"), ver)

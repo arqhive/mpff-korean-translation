@@ -354,14 +354,18 @@ def _patch(src, dst, payload, bindir, work, key_extra):
     log('본편 펼치는 중...')
     T.run('3dstool', ['-xvtf', 'cxi', 'p0.ncch'] + cx, 'xcxi')
     os.remove(W('p0.ncch'))
-    if not is_update:                       # 업데이트에는 배너가 없고 제목도 본편 것을 쓴다
-        ex = open(W('exefs.bin'), 'rb').read()
-        src_ex = read_exefs(ex)
-        patches = {'banner': patch_banner(src_ex['banner'], strip),
-                   'icon': patch_smdh(src_ex['icon'], titles['short'], titles['long'],
-                                      titles['publisher'])}
-        open(W('exefs.bin'), 'wb').write(rebuild_exefs(ex, patches))
-        log('HOME 메뉴 배너·게임 이름 교체')
+    # 아이콘(게임 이름)은 본편·업데이트 둘 다 바꾼다. HOME 메뉴는 본편 것을 쓰지만
+    # 데이터 관리는 타이틀마다 자기 아이콘을 읽고, 한국판 본체는 한국어 칸을 본다 —
+    # 원본 업데이트 아이콘은 그 칸이 비어 있어 이름이 빈칸으로 나왔다.
+    # 배너는 본편에만 있다.
+    ex = open(W('exefs.bin'), 'rb').read()
+    src_ex = read_exefs(ex)
+    patches = {'icon': patch_smdh(src_ex['icon'], titles['short'], titles['long'],
+                                  titles['publisher'])}
+    if not is_update:
+        patches['banner'] = patch_banner(src_ex['banner'], strip)
+    open(W('exefs.bin'), 'wb').write(rebuild_exefs(ex, patches))
+    log('게임 이름 교체' if is_update else 'HOME 메뉴 배너·게임 이름 교체')
 
     T.run('3dstool', ['-xvtf', 'romfs', 'romfs.bin', '--romfs-dir', 'rx'], 'xromfs')
     n = 0
